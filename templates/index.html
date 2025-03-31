@@ -1,0 +1,144 @@
+{% extends "layout.html" %}
+
+{% block title %}Scan Onion Sites for Security Vulnerabilities{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h2 class="text-center mb-0">
+                    <i class="fas fa-shield-alt me-2"></i>Dark Web Security Scanner
+                </h2>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    This tool scans .onion sites for common security vulnerabilities. Enter a .onion URL below to start scanning.
+                </div>
+                
+                <form action="{{ url_for('scan') }}" method="post" id="scan-form">
+                    <div class="mb-3">
+                        <label for="onion_url" class="form-label">Onion URL</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-globe"></i></span>
+                            <input type="text" class="form-control" id="onion_url" name="onion_url" 
+                                   placeholder="example.onion" required>
+                            <button type="submit" class="btn btn-primary" id="scan-button">
+                                <i class="fas fa-search me-1"></i> Scan
+                            </button>
+                        </div>
+                        <div class="form-text">Enter a complete .onion URL (e.g., example.onion)</div>
+                    </div>
+                </form>
+                
+                <div class="mt-4">
+                    <h4>What We Scan For</h4>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="d-flex mb-3">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-lock-open text-danger fa-2x"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h5>Missing Security Headers</h5>
+                                    <p class="text-muted">Detects missing HTTP security headers that could leave your site vulnerable.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex mb-3">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-code text-warning fa-2x"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h5>XSS Vulnerabilities</h5>
+                                    <p class="text-muted">Checks for potential cross-site scripting vulnerabilities.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex mb-3">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-cookie-bite text-info fa-2x"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h5>Cookie Security</h5>
+                                    <p class="text-muted">Analyzes cookie configuration for security issues.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex mb-3">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-server text-primary fa-2x"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h5>Server Information</h5>
+                                    <p class="text-muted">Identifies potentially vulnerable server configurations.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                {% if scanner_settings and scanner_settings.demo_mode %}
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Demo Mode Active:</strong> The scanner is running in demo mode and will generate simulated results.
+                    <a href="{{ url_for('settings') }}" class="alert-link ms-2">Change settings</a>
+                </div>
+                {% elif scanner_settings and scanner_settings.tor_host == '127.0.0.1' and scanner_settings.tor_port == 9050 %}
+                <div class="alert alert-success mb-0">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Public Proxy Mode:</strong> The scanner will use a public Tor proxy service to access .onion sites.
+                    No local Tor installation needed! This is less secure than using your local Tor service but works on the cloud.
+                    <span class="ms-2 badge bg-info">Android Compatible</span>
+                    <a href="{{ url_for('settings') }}" class="alert-link ms-2">Change settings</a>
+                </div>
+                {% else %}
+                <div class="alert alert-warning mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Important:</strong> This tool requires a running Tor service on your system
+                    (SOCKS proxy on {{ scanner_settings.tor_host if scanner_settings else '127.0.0.1' }}:{{ scanner_settings.tor_port if scanner_settings else '9050' }}).
+                    <span class="ms-2 badge bg-info">Works with Orbot on Android</span>
+                    <a href="{{ url_for('settings') }}" class="alert-link ms-2">Change settings</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mt-4 shadow">
+            <div class="card-header bg-secondary text-white">
+                <h4 class="mb-0">Using the Scanner Safely</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <p>To ensure safe and ethical use of this scanner:</p>
+                        <ul>
+                            <li>Only scan sites you own or have explicit permission to test</li>
+                            <li>Do not use this tool for malicious purposes</li>
+                            <li>Be aware that scanning may generate significant traffic to the target site</li>
+                            <li>Some scans may trigger intrusion detection systems</li>
+                        </ul>
+                        <p>This tool is provided for educational and defensive security purposes only.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Show loading indicator when form is submitted
+    document.getElementById('scan-form').addEventListener('submit', function(e) {
+        const button = document.getElementById('scan-button');
+        button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Scanning...';
+        button.disabled = true;
+    });
+</script>
+{% endblock %}

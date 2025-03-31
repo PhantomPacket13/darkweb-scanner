@@ -1,0 +1,128 @@
+{% extends "layout.html" %}
+
+{% block title %}Scanner Settings{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header bg-dark">
+                <h2 class="card-title mb-0">
+                    <i class="fas fa-cog me-2"></i>Scanner Settings
+                </h2>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('settings') }}" method="post">
+                    
+                    <!-- Demo Mode Toggle -->
+                    <div class="form-group mb-4">
+                        <div class="card bg-secondary">
+                            <div class="card-body">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="demo_mode" name="demo_mode" {% if settings.demo_mode %}checked{% endif %}>
+                                    <label class="form-check-label" for="demo_mode">
+                                        <strong>Demo Mode</strong>
+                                    </label>
+                                </div>
+                                <div class="text-muted small mt-2">
+                                    When enabled, the scanner will generate simulated results instead of attempting real connections through Tor.
+                                    Use this option if you don't have Tor installed or want to test the application without real scans.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tor Proxy Settings -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-dark">
+                            <h5 class="mb-0">
+                                <i class="fas fa-network-wired me-2"></i>Tor Proxy Configuration
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="tor_host" class="form-label">Tor Proxy Host</label>
+                                    <input type="text" class="form-control" id="tor_host" name="tor_host" value="{{ settings.tor_host }}" required>
+                                    <div class="form-text text-muted">
+                                        The hostname or IP address where the Tor SOCKS proxy is running (default: 127.0.0.1).
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="tor_port" class="form-label">Tor Proxy Port</label>
+                                    <input type="number" class="form-control" id="tor_port" name="tor_port" value="{{ settings.tor_port }}" min="1" max="65535" required>
+                                    <div class="form-text text-muted">
+                                        The port of the Tor SOCKS proxy (default: 9050).
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="alert alert-info" role="alert">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Note:</strong> These settings only apply when demo mode is disabled. If you change these settings,
+                                make sure your Tor service is running on the specified host and port.
+                            </div>
+                            <div class="alert alert-success" role="alert">
+                                <i class="fas fa-globe me-2"></i>
+                                <strong>Public Proxy Mode:</strong> If you leave the default settings (127.0.0.1:9050) and don't have a local Tor connection,
+                                the scanner will automatically use a public Tor2web proxy to access onion sites. This feature allows scanning without installing Tor,
+                                but with potentially limited functionality.
+                            </div>
+                            <div class="alert alert-primary" role="alert">
+                                <i class="fas fa-mobile-alt me-2"></i>
+                                <strong>Orbot/Android Configuration:</strong> To use this scanner with Orbot on Android, configure Orbot to provide a SOCKS proxy, 
+                                then enter <code>127.0.0.1</code> as host and <code>9050</code> as port (or the port configured in Orbot).
+                                If using Orbot's VPN mode, continue using the default settings.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Settings
+                        </button>
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary ms-2">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Debug Information -->
+        <div class="card mt-4 shadow">
+            <div class="card-header bg-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Tor Connection Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-secondary">
+                    <p>
+                        <strong>Current Connection Status:</strong>
+                    </p>
+                    <ul>
+                        <li><strong>Demo Mode:</strong> {% if settings.demo_mode %}<span class="badge bg-info">Enabled</span>{% else %}<span class="badge bg-secondary">Disabled</span>{% endif %}</li>
+                        <li><strong>Tor Proxy:</strong> {{ settings.tor_host }}:{{ settings.tor_port }}</li>
+                        <li><strong>Public Proxy Mode:</strong> 
+                            {% if not settings.demo_mode and settings.tor_host == '127.0.0.1' and settings.tor_port == 9050 %}
+                                <span class="badge bg-success">Enabled (automatic)</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Disabled</span>
+                            {% endif %}
+                        </li>
+                    </ul>
+                    <p class="small text-muted mt-3">
+                        To use real scanning mode, you have the following options:
+                    </p>
+                    <ul class="small text-muted">
+                        <li><strong>Local Tor:</strong> Install Tor on your system and make sure it's running on the configured host and port.</li>
+                        <li><strong>Public Proxy:</strong> Keep the default settings (127.0.0.1:9050) to use the public Tor2web proxy service.</li>
+                        <li><strong>Android/Orbot:</strong> Install Orbot from Google Play Store or F-Droid. Enable SOCKS proxy in Orbot settings, then use 127.0.0.1 and the configured port (typically 9050).</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

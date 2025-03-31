@@ -1,0 +1,430 @@
+{% extends "layout.html" %}
+
+{% block title %}Security Report - {{ url }}{% endblock %}
+
+{% block head %}
+<style>
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        .page-break {
+            page-break-before: always;
+        }
+        body {
+            padding: 0;
+            margin: 0;
+        }
+        .container {
+            width: 100%;
+            max-width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        .card {
+            border: 1px solid #ddd;
+        }
+        .card-header {
+            background-color: #f8f9fa !important;
+            color: #212529 !important;
+        }
+        .table {
+            width: 100%;
+        }
+    }
+    .report-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .vulnerability-table th {
+        width: 30%;
+    }
+    .report-section {
+        margin-bottom: 2rem;
+    }
+    .security-score {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin: 0 auto;
+    }
+    .security-excellent {
+        background-color: #198754;
+        color: white;
+    }
+    .security-good {
+        background-color: #20c997;
+        color: white;
+    }
+    .security-fair {
+        background-color: #fd7e14;
+        color: white;
+    }
+    .security-poor {
+        background-color: #dc3545;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4 no-print">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('results') }}">Scan Results</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Report</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row mb-4 no-print">
+    <div class="col-12 text-center">
+        <div class="btn-group" role="group" aria-label="Report Actions">
+            <button class="btn btn-primary" onclick="window.print()">
+                <i class="fas fa-print me-2"></i>Print Report
+            </button>
+            <a href="{{ url_for('export_pdf') }}" class="btn btn-danger">
+                <i class="fas fa-file-pdf me-2"></i>Export as PDF
+            </a>
+            <a href="{{ url_for('export_markdown') }}" class="btn btn-info">
+                <i class="fas fa-file-alt me-2"></i>Export as Markdown
+            </a>
+            <button class="btn btn-secondary" onclick="window.location.href='{{ url_for('results') }}'">
+                <i class="fas fa-arrow-left me-2"></i>Back to Results
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="report-header">
+        <h1>Security Vulnerability Report</h1>
+        <h3>{{ url }}</h3>
+        <p>Generated on {{ results.timestamp }}</p>
+        {% if results.is_demo %}
+        <div class="alert alert-warning">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Demo Mode:</strong> This report contains simulated scan results. A Tor connection is required for actual scanning.
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="report-section">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h3>Executive Summary</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        {% set score = results.security_score %}
+                        <div class="security-score 
+                            {% if score >= 90 %}security-excellent
+                            {% elif score >= 70 %}security-good
+                            {% elif score >= 50 %}security-fair
+                            {% else %}security-poor{% endif %}">
+                            {{ score }}
+                        </div>
+                        <h4 class="mt-3">Security Score</h4>
+                        <p>
+                            {% if score >= 90 %}Excellent
+                            {% elif score >= 70 %}Good
+                            {% elif score >= 50 %}Fair
+                            {% else %}Poor{% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-8">
+                        <h4>Summary of Findings</h4>
+                        <p>
+                            This report presents the results of a security scan performed on {{ url }} on {{ results.timestamp }}.
+                            {% if results.reachable %}
+                                The site was reachable with a response time of {{ results.response_time }} seconds.
+                            {% else %}
+                                The site was not reachable during the scan.
+                            {% endif %}
+                        </p>
+                        
+                        <p>
+                            The scan identified:
+                        </p>
+                        <ul>
+                            <li><strong>{{ results.severity_counts.high }}</strong> high severity vulnerabilities</li>
+                            <li><strong>{{ results.severity_counts.medium }}</strong> medium severity vulnerabilities</li>
+                            <li><strong>{{ results.severity_counts.low }}</strong> low severity vulnerabilities</li>
+                            <li><strong>{{ results.severity_counts.info }}</strong> informational findings</li>
+                        </ul>
+                        
+                        {% if results.vulnerabilities %}
+                            <div class="alert alert-warning">
+                                <strong>Action Required:</strong> This scan has identified security vulnerabilities that should be addressed to improve the security posture of this site.
+                            </div>
+                        {% else %}
+                            <div class="alert alert-success">
+                                <strong>No Vulnerabilities Detected:</strong> This scan did not identify any significant security issues. However, this does not guarantee complete security.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="report-section">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h3>Target Information</h3>
+            </div>
+            <div class="card-body">
+                <table class="table table-bordered table-striped">
+                    <tr>
+                        <th style="width: 30%">URL</th>
+                        <td>{{ url }}</td>
+                    </tr>
+                    <tr>
+                        <th>Scan Date</th>
+                        <td>{{ results.timestamp }}</td>
+                    </tr>
+                    <tr>
+                        <th>Status</th>
+                        <td>
+                            {% if results.reachable %}
+                                Reachable (HTTP {{ results.status_code }})
+                            {% else %}
+                                Unreachable
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Response Time</th>
+                        <td>{{ results.response_time }} seconds</td>
+                    </tr>
+                    {% if results.server_info %}
+                    <tr>
+                        <th>Server Information</th>
+                        <td>
+                            <ul class="mb-0">
+                                {% for key, value in results.server_info.items() %}
+                                <li><strong>{{ key|capitalize }}:</strong> {{ value }}</li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="report-section page-break">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h3>Vulnerability Details</h3>
+            </div>
+            <div class="card-body">
+                {% if results.vulnerabilities %}
+                    {% for vulnerability in results.vulnerabilities %}
+                        <div class="card mb-4">
+                            <div class="card-header 
+                                {% if vulnerability.severity == 'high' %}bg-danger text-white
+                                {% elif vulnerability.severity == 'medium' %}bg-warning
+                                {% elif vulnerability.severity == 'low' %}bg-info
+                                {% else %}bg-secondary text-white{% endif %}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h4 class="mb-0">{{ vulnerability.name }}</h4>
+                                    <span class="badge 
+                                        {% if vulnerability.severity == 'high' %}bg-white text-danger
+                                        {% elif vulnerability.severity == 'medium' %}bg-dark text-warning
+                                        {% elif vulnerability.severity == 'low' %}bg-dark text-info
+                                        {% else %}bg-light text-secondary{% endif %}">
+                                        Severity: {{ vulnerability.severity|upper }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-bordered vulnerability-table">
+                                    <tr>
+                                        <th>Description</th>
+                                        <td>{{ vulnerability.description }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Recommendation</th>
+                                        <td>{{ vulnerability.recommendation }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Impact</th>
+                                        <td>
+                                            {% if vulnerability.severity == 'high' %}
+                                                This vulnerability could allow attackers to gain unauthorized access, extract sensitive data, or execute malicious code.
+                                            {% elif vulnerability.severity == 'medium' %}
+                                                This vulnerability could expose sensitive information or enable limited attacks against the site or its users.
+                                            {% elif vulnerability.severity == 'low' %}
+                                                This vulnerability represents a minor security concern that should be addressed as part of good security practices.
+                                            {% else %}
+                                                This finding is informational and does not represent an immediate security risk.
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="alert alert-success">
+                        <h4><i class="fas fa-check-circle me-2"></i>No Vulnerabilities Detected</h4>
+                        <p>
+                            Our scan did not identify any significant security vulnerabilities in the target site. 
+                            However, this does not guarantee complete security. We recommend implementing ongoing 
+                            security testing and monitoring as part of a comprehensive security program.
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    {% if results.headers or results.cookies %}
+    <div class="report-section page-break">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h3>Additional Technical Details</h3>
+            </div>
+            <div class="card-body">
+                {% if results.headers %}
+                <h4>HTTP Headers</h4>
+                <div class="table-responsive mb-4">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Header</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for header, value in results.headers.items() %}
+                            <tr>
+                                <td>{{ header }}</td>
+                                <td>{{ value }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+                
+                {% if results.cookies %}
+                <h4>Cookies</h4>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Secure</th>
+                                <th>HttpOnly</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for name, cookie in results.cookies.items() %}
+                            <tr>
+                                <td>{{ name }}</td>
+                                <td>
+                                    {% if cookie.secure %}
+                                    <span class="text-success">Yes</span>
+                                    {% else %}
+                                    <span class="text-danger">No</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if cookie.httponly %}
+                                    <span class="text-success">Yes</span>
+                                    {% else %}
+                                    <span class="text-danger">No</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="report-section">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h3>Recommendations Summary</h3>
+            </div>
+            <div class="card-body">
+                {% if results.vulnerabilities %}
+                    <h4>Priority Actions</h4>
+                    <ol>
+                        {% for vulnerability in results.vulnerabilities %}
+                            {% if vulnerability.severity == 'high' %}
+                                <li><strong>{{ vulnerability.name }}:</strong> {{ vulnerability.recommendation }}</li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% for vulnerability in results.vulnerabilities %}
+                            {% if vulnerability.severity == 'medium' %}
+                                <li><strong>{{ vulnerability.name }}:</strong> {{ vulnerability.recommendation }}</li>
+                            {% endif %}
+                        {% endfor %}
+                    </ol>
+                    
+                    <h4>Additional Recommendations</h4>
+                    <ul>
+                        {% for vulnerability in results.vulnerabilities %}
+                            {% if vulnerability.severity == 'low' or vulnerability.severity == 'info' %}
+                                <li><strong>{{ vulnerability.name }}:</strong> {{ vulnerability.recommendation }}</li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="alert alert-info">
+                        <h4>General Security Recommendations</h4>
+                        <p>While no specific vulnerabilities were detected, we recommend these general security practices:</p>
+                        <ul>
+                            <li>Implement all security-related HTTP headers</li>
+                            <li>Ensure proper authentication and authorization mechanisms</li>
+                            <li>Keep all software components updated</li>
+                            <li>Implement content security policies</li>
+                            <li>Conduct regular security audits</li>
+                        </ul>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="report-section">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h3>Disclaimer</h3>
+            </div>
+            <div class="card-body">
+                <p>
+                    This security report is provided for informational purposes only. The scan performed was limited
+                    in scope and may not identify all security vulnerabilities present in the target system. Security
+                    assessment is a point-in-time evaluation, and the security posture of the target may change over time.
+                </p>
+                <p>
+                    It is recommended to perform regular, comprehensive security testing by qualified security professionals
+                    as part of an overall security program. The creators of this scanner tool are not responsible for any
+                    damages that may result from using this information or implementing the recommendations.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

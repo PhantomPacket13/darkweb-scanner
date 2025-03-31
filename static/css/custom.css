@@ -1,0 +1,145 @@
+/* 
+ * Custom styles for the Onion Scanner application
+ * Using the Bootstrap dark theme
+ */
+
+/* General styling */
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+.footer {
+    margin-top: auto;
+}
+
+/* Cards styling */
+.card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.card-header {
+    font-weight: 500;
+}
+
+/* Vulnerability severity indicators */
+.severity-high {
+    border-left: 4px solid #dc3545;
+}
+
+.severity-medium {
+    border-left: 4px solid #fd7e14;
+}
+
+.severity-low {
+    border-left: 4px solid #0dcaf0;
+}
+
+.severity-info {
+    border-left: 4px solid #6c757d;
+}
+
+/* Security score display */
+.security-score-display {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    font-size: 2.5rem;
+    font-weight: bold;
+}
+
+/* Table improvements */
+.table-responsive {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.075);
+}
+
+/* Form styling */
+.form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 202, 240, 0.25);
+}
+
+/* Print styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .page-break {
+        page-break-before: always;
+    }
+    
+    body {
+        font-size: 12pt;
+    }
+    
+    .container {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .card {
+        border: 1px solid #ddd !important;
+        break-inside: avoid;
+    }
+    
+    .security-score {
+        border: 2px solid #333 !important;
+        color: #333 !important;
+        background-color: #f8f9fa !important;
+    }
+}
+
+/* Scan button animation */
+@keyframes scanning {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.scanning {
+    animation: scanning 1.5s infinite;
+}
+
+/* Loading indicator */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 9999;
+}
+
+.spinner-container {
+    text-align: center;
+}
+
+.loading-message {
+    color: white;
+    margin-top: 1rem;
+    font-size: 1.2rem;
+}
